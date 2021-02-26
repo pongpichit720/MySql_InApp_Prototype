@@ -1,0 +1,176 @@
+﻿@using Database.Models
+
+@model List<Database.Models.T1>
+
+@{
+    ViewData["Title"] = "Home Page";
+
+    var table = (string)ViewData["Table"];
+
+    var filterModel = (FilterModel)ViewData["Filter"];
+    if (filterModel == null)
+    {
+        filterModel = new FilterModel();
+    }
+
+    var displayFilter = false;
+    if (filterModel.ID != int.MaxValue)
+    {
+        displayFilter = true;
+    }
+    if (!string.IsNullOrEmpty(filterModel.Name))
+    {
+        displayFilter = true;
+    }
+}
+
+<h1><b>MySQL In-App Prototype</b></h1>
+
+<br />
+<label><b>T1:</b></label>
+<a href="T1" style="text-decoration: none;">
+    <button type="button" class="btn btn-primary">READ</button>
+</a>
+<button type="button" class="btn btn-success" data-toggle="collapse" data-target="#InsertBody">INSERT</button>
+<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#UpdateBody">UPDATE</button>
+<button type="button" class="btn btn-danger" data-toggle="collapse" data-target="#DeleteBody">DELETE</button>
+<div id="InsertBody" class="collapse" style="background-color: #5cb85c; margin: 1em; padding: 1em;">
+    <form asp-action="Insert">
+        <div class="row form-group">
+            <div class="col-md">
+                <label class="control-label">ID</label>
+                <input name="ID" class="form-control" />
+            </div>
+            <div class="col-md">
+                <label class="control-label">Name</label>
+                <input name="Name" class="form-control" />
+            </div>
+        </div>
+        <input type="submit" value="Apply" class="btn btn-primary" />
+    </form>
+</div>
+<div id="UpdateBody" class="collapse" style="background-color: #5bc0de; margin: 1em; padding: 1em;">
+    <form asp-action="Update">
+        <div class="row form-group">
+            <div class="col-md">
+                <label class="control-label">ID</label>
+                <input name="ID" class="form-control" />
+            </div>
+            <div class="col-md">
+                <label class="control-label">Name</label>
+                <input name="Name" class="form-control" />
+            </div>
+        </div>
+        <input type="submit" value="Apply" class="btn btn-primary" />
+    </form>
+</div>
+<div id="DeleteBody" class="collapse" style="background-color: #d9534f; margin: 1em; padding: 1em;">
+    <form asp-action="Delete">
+        <div class="row form-group">
+            <div class="col-md">
+                <label class="control-label">ID</label>
+                <input name="ID" class="form-control" />
+            </div>
+        </div>
+        <input type="submit" value="Apply" class="btn btn-primary" />
+    </form>
+</div>
+
+
+<hr />
+
+
+<form asp-action="Download" method="get" style="display: inline-block">
+    <input type="submit" class="btn btn-primary" value="Download (MemoryStream)" />
+</form>
+<button id="DownloadBtn" class="btn btn-success" onclick="DownloadHelper()">Download (RootFilePath)</button>
+<a id="HiddenDownloadLink" href="~/data/localdb.txt" download hidden>HiddenDownloadLink</a>
+<script>
+    function DownloadHelper() {
+        (async () => {
+            const rawResponse = await fetch(document.URL + "Home/Backup", { method: 'GET' });
+            const content = await rawResponse.json();
+            if (content.success) {
+                document.getElementById("HiddenDownloadLink").click();
+            } else {
+                location.replace(document.URL + "Home/Error");
+            }
+        })();
+    }
+</script>
+
+
+<hr />
+
+
+<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#RestoreBody">Restore</button>
+<div id="RestoreBody" class="collapse" style="background-color: #5bc0de; margin: 1em; padding: 1em;">
+    <form asp-action="Restore">
+        <div class="row form-group">
+            <div class="col-md">
+                <label class="control-label">Path</label>
+                <input name="Path" class="form-control" />
+            </div>
+        </div>
+        <input type="submit" value="Apply" class="btn btn-primary" />
+    </form>
+</div>
+
+
+<br />
+<br />
+
+
+@{
+    if (!string.IsNullOrEmpty(table) && Model != null)
+    {
+        <button id="FilterBtn" class="btn btn-secondary dropdown-toggle filter-header" type="button" data-toggle="collapse" data-target="#FilterBody">
+            Filter <span class="caret"></span>
+        </button>
+        <br />
+        <div id="FilterBody" class="filter-body collapse @(displayFilter ? "show" : "")">
+            <div class="card card-body" style="background-color: #EEE">
+                <form asp-action="Index">
+                    <div class="row form-group">
+                        <div class="col-md">
+                            <label class="control-label">ID</label>
+                            <input name="ID" value="@(filterModel.ID != int.MaxValue ? filterModel.ID : "")" class="form-control" />
+                        </div>
+                        <div class="col-md">
+                            <label class="control-label">Name</label>
+                            <input name="Name" value="@filterModel.Name" class="form-control" />
+                        </div>
+                    </div>
+                    <input type="submit" value="Apply" class="btn btn-primary" />
+                    <a class="btn btn-info" asp-action="Index" asp-route-Table="@table">Reset</a>
+                </form>
+            </div>
+        </div>
+        <br />
+
+        <table class="table table-bordered"
+               id="table"
+               data-toggle="table"
+               data-show-columns="true"
+               data-show-export="true"
+               data-sort-stable="true">
+            <thead>
+                <tr>
+                    <th data-sortable="true" data-field="id">@Html.DisplayNameFor(Model => Model.FirstOrDefault().ID)</th>
+                    <th data-sortable="true" data-field="name">@Html.DisplayNameFor(Model => Model.FirstOrDefault().Name)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@Html.DisplayFor(modelItem => item.ID)</td>
+                            <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+}
